@@ -17,6 +17,7 @@ var CONFIG = {
 
   // Gmail label applied to emails after they've been processed, to avoid
   // re-sending. The label will be created automatically on first run.
+  // Note: "-label:<this value>" is always appended to GMAIL_QUERY at runtime.
   PROCESSED_LABEL: "discord-relayed",
 
   // Emails from these addresses or domains will never be relayed, even if they
@@ -29,6 +30,17 @@ var CONFIG = {
 
   // How many emails to process per run (keep low to stay within quota)
   MAX_THREADS_PER_RUN: 20,
+
+  // How often the trigger runs, in minutes (minimum 1)
+  POLL_INTERVAL_MINUTES: 5,
+
+  // Gmail search query used to find candidate emails.
+  // newer_than:1d ensures only recent mail is checked — avoids processing your
+  // entire inbox history on first run. Increase if your trigger interval is > 1d.
+  // Examples:
+  //   "is:unread label:inbox newer_than:1d"   — only inbox
+  //   "is:unread from:@example.com newer_than:1d"
+  GMAIL_QUERY: "is:unread newer_than:1d",
 };
 
 // =============================================================================
@@ -38,8 +50,8 @@ var CONFIG = {
 function checkEmailsAndRelay() {
   var label = getOrCreateLabel(CONFIG.PROCESSED_LABEL);
 
-  // Search for unread emails not yet processed
-  var query = "is:unread -label:" + CONFIG.PROCESSED_LABEL;
+  // Search for emails not yet processed (-label: exclusion prevents re-processing)
+  var query = CONFIG.GMAIL_QUERY + " -label:" + CONFIG.PROCESSED_LABEL;
   var threads = GmailApp.search(query, 0, CONFIG.MAX_THREADS_PER_RUN);
 
   for (var i = 0; i < threads.length; i++) {
@@ -60,7 +72,7 @@ function checkEmailsAndRelay() {
       }
     }
 
-    // Mark thread as processed regardless of match, so we don't re-examine it
+    // Mark thread as processed regardless of keyword match
     thread.addLabel(label);
   }
 }
@@ -145,7 +157,7 @@ function getOrCreateLabel(name) {
   return label;
 }
 
-// Run this once manually to register the time-driven trigger (every 5 minutes)
+// Run this once manually to register the time-driven trigger
 function createTrigger() {
   // Remove any existing triggers for checkEmailsAndRelay to avoid duplicates
   var triggers = ScriptApp.getProjectTriggers();
@@ -156,7 +168,7 @@ function createTrigger() {
   }
   ScriptApp.newTrigger("checkEmailsAndRelay")
     .timeBased()
-    .everyMinutes(5)
+    .everyMinutes(CONFIG.POLL_INTERVAL_MINUTES)
     .create();
-  Logger.log("Trigger created — checkEmailsAndRelay will run every 5 minutes.");
+  Logger.log("Trigger created — checkEmailsAndRelay will run every " + CONFIG.POLL_INTERVAL_MINUTES + " minutes.");
 }

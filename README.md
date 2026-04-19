@@ -39,15 +39,17 @@ var CONFIG = {
 
 That's it. The script will now run every 5 minutes automatically.
 
+> **Note:** The default query (`is:unread newer_than:1d`) only looks at the last 24 hours, so historical mail will never flood your Discord channel. If you change `POLL_INTERVAL_MINUTES` to something longer than a day, adjust the `newer_than` value in `GMAIL_QUERY` to match.
+
 ## Customisation
 
 | What | Where |
 |---|---|
-| Change polling interval | Edit `everyMinutes(5)` in `createTrigger()` |
-| Add/remove keywords | Edit `KEYWORDS` in `CONFIG` |
-| Exclude specific senders | Add to `EXCLUDED_SENDERS` in `CONFIG` — use a full address (`noreply@example.com`) or a domain (`@example.com`) |
-| Change the Discord channel | Replace the webhook URL in `CONFIG` |
-| Scope to a specific Gmail label/folder | Modify the `query` string in `checkEmailsAndRelay()` |
+| Change polling interval | `POLL_INTERVAL_MINUTES` in `CONFIG` |
+| Add/remove keywords | `KEYWORDS` in `CONFIG` |
+| Exclude specific senders | `EXCLUDED_SENDERS` in `CONFIG` — use a full address (`noreply@example.com`) or a domain (`@example.com`) |
+| Change the Discord channel | `DISCORD_WEBHOOK_URL` in `CONFIG` |
+| Scope to a specific Gmail folder/sender | `GMAIL_QUERY` in `CONFIG` (standard Gmail search syntax) |
 
 ## Removing the trigger
 
